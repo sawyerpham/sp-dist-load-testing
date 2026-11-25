@@ -3,7 +3,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
@@ -55,16 +54,14 @@ final class LoadTest implements Runnable {
         return finished;
     }
 
-    /** Latency percentiles are reported once the test has finished. */
-    String toJson() {
-        boolean complete = finished;
-        long[] sorted = complete ? latencies.clone() : new long[0];
-        Arrays.sort(sorted);
-        return "{\"finished\":%b,\"requests\":%d,\"errors\":%d,\"p50Ms\":%d,\"p95Ms\":%d}".formatted(
-                complete, done.get(), errors.get(), percentile(sorted, 50), percentile(sorted, 95));
-    }
-
-    private static long percentile(long[] sorted, int p) {
-        return sorted.length == 0 ? 0 : sorted[(sorted.length - 1) * p / 100] / 1_000_000;
+    /** Latencies are included once the test has finished. */
+    Stats stats() {
+        var stats = new Stats();
+        stats.finished = finished;
+        stats.requests = done.get();
+        stats.errors = errors.get();
+        if (stats.finished)
+            for (long nanos : latencies) stats.latencies.merge(nanos / 1_000_000, 1L, Long::sum);
+        return stats;
     }
 }

@@ -1,11 +1,21 @@
-# A worker plus a throwaway target to aim it at.
+# A controller, two workers and a throwaway target to aim them at.
+x-worker: &worker
+  build: .
+  environment:
+    BIND: 0.0.0.0
+    ALLOWED_HOSTS: target
+
 services:
-  worker:
+  controller:
     build: .
+    command: ["java", "-cp", "/app", "Controller"]
     environment:
       BIND: 0.0.0.0
-      ALLOWED_HOSTS: target
+      WORKERS: http://worker1:8080,http://worker2:8080
     ports:
       - "127.0.0.1:8080:8080" # the API has no auth: never publish it publicly
+    depends_on: [worker1, worker2]
+  worker1: *worker # workers publish no ports; only the controller reaches them
+  worker2: *worker
   target:
     image: nginx:alpine

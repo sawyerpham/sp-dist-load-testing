@@ -5,4 +5,5 @@ RUN javac -d /out /src/*.java
 FROM eclipse-temurin:21-jre
 COPY --from=build /out /app
 USER nobody
-CMD ["java", "-cp", "/app", "Server"]
+# one image for both roles; compose overrides the class for the controller
+CMD ["java", "-cp", "/app", "Worker"]
