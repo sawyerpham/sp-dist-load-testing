@@ -1,0 +1,11 @@
+# A worker plus a throwaway target to aim it at.
+services:
+  worker:
+    build: .
+    environment:
+      BIND: 0.0.0.0
+      ALLOWED_HOSTS: target
+    ports:
+      - "127.0.0.1:8080:8080" # the API has no auth: never publish it publicly
+  target:
+    image: nginx:alpine
